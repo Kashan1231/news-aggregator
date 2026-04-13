@@ -1,15 +1,14 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import NewsCard from '@/components/NewsCard'
 import SkeletonCard from '@/components/SkeletonCard'
 import Footer from '@/components/Footer'
-import { Suspense } from 'react'
 
 const CATEGORIES = ['all', 'technology', 'sports', 'politics', 'business', 'health', 'entertainment', 'science']
 
-export default function Home() {
+function HomeContent() {
   const [articles, setArticles] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('all')
@@ -17,11 +16,9 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const searchParams = useSearchParams()
 
-  // URL se category aur search lo
   useEffect(() => {
     const cat = searchParams.get('category')
     const search = searchParams.get('search')
-
     if (search) {
       setSearchQuery(search)
       setActiveCategory('all')
@@ -38,8 +35,6 @@ export default function Home() {
     setLoading(true)
     try {
       let url = ''
-
-      // Search query hai toh search API use karo
       if (searchQuery) {
         url = `/api/search?q=${encodeURIComponent(searchQuery)}`
       } else if (activeCategory === 'all') {
@@ -47,7 +42,6 @@ export default function Home() {
       } else {
         url = `/api/articles?category=${activeCategory}`
       }
-
       const res = await fetch(url)
       const data = await res.json()
       setArticles(data.articles || [])
@@ -69,13 +63,9 @@ export default function Home() {
   }
 
   return (
-  <Suspense fallback={<div>Loading...</div>}>
     <div style={{ minHeight: '100vh', background: 'var(--color-background-tertiary)' }}>
       <Navbar />
-
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-
-        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -98,7 +88,6 @@ export default function Home() {
             </h1>
             <p style={{
               fontSize: '14px',
-              fontWeight: '450',
               color: 'var(--color-text-secondary)',
               margin: '4px 0 0'
             }}>
@@ -108,29 +97,27 @@ export default function Home() {
               }
             </p>
           </div>
-
           {!searchQuery && (
-          <button
-           onClick={fetchFreshNews}
-          disabled={fetching}
-          style={{
-          opacity: fetching ? 0.6 : 1,
-          background: '#111',
-          color: '#fff',
-          border: 'none',
-          padding: '8px 20px',
-          borderRadius: 'var(--border-radius-md)',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer'
-  }}
->
-  {fetching ? 'Fetching...' : 'Refresh News'}
-</button>
+            <button
+              onClick={fetchFreshNews}
+              disabled={fetching}
+              style={{
+                opacity: fetching ? 0.6 : 1,
+                background: '#111',
+                color: '#fff',
+                border: 'none',
+                padding: '8px 20px',
+                borderRadius: 'var(--border-radius-md)',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              {fetching ? 'Fetching...' : 'Refresh News'}
+            </button>
           )}
         </div>
 
-        {/* Category Filter — search mein hide karo */}
         {!searchQuery && (
           <div style={{
             display: 'flex',
@@ -165,7 +152,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Articles Grid */}
         {loading ? (
           <div style={{
             display: 'grid',
@@ -201,8 +187,15 @@ export default function Home() {
           </div>
         )}
       </main>
-       <Footer />
+      <Footer />
     </div>
-     </Suspense>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   )
 }
