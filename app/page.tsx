@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar'
 import NewsCard from '@/components/NewsCard'
 import SkeletonCard from '@/components/SkeletonCard'
 import Footer from '@/components/Footer'
+import { Suspense } from 'react'
 
 const CATEGORIES = ['all', 'technology', 'sports', 'politics', 'business', 'health', 'entertainment', 'science']
 
@@ -68,6 +69,7 @@ export default function Home() {
   }
 
   return (
+  <Suspense fallback={<div>Loading...</div>}>
     <div style={{ minHeight: '100vh', background: 'var(--color-background-tertiary)' }}>
       <Navbar />
 
@@ -201,5 +203,6 @@ export default function Home() {
       </main>
        <Footer />
     </div>
+     </Suspense>
   )
 }
