@@ -128,3 +128,15 @@
     @apply font-sans;
   }
 }
+
+@media (max-width: 768px) {
+  nav {
+    padding: 0 1rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 1rem !important;
+  }
+}
