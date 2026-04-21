@@ -15,30 +15,18 @@ type Article = {
   published_at: string
 }
 
-export default function NewsCard({ 
-  article, 
+export default function NewsCard({
+  article,
   initialSaved = false,
   onUnsave
-}: { 
+}: {
   article: Article
   initialSaved?: boolean
-  onUnsave?: () => void 
+  onUnsave?: () => void
 }) {
   const [saved, setSaved] = useState(initialSaved)
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-
-  const sentimentColor: Record<string, string> = {
-    positive: '#639922',
-    negative: '#A32D2D',
-    neutral: '#5F5E5A'
-  }
-
-  const biasColor: Record<string, string> = {
-    low: '#639922',
-    medium: '#BA7517',
-    high: '#A32D2D'
-  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -46,13 +34,9 @@ export default function NewsCard({
 
   async function toggleSave(e: React.MouseEvent) {
     e.stopPropagation()
-    if (!user) {
-      window.location.href = '/login'
-      return
-    }
+    if (!user) { window.location.href = '/login'; return }
     if (loading) return
     setLoading(true)
-
     try {
       if (saved) {
         await fetch('/api/saved', {
@@ -70,129 +54,98 @@ export default function NewsCard({
         })
         setSaved(true)
       }
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
     setLoading(false)
   }
 
   if (!article) return null
 
-  return (
-    <div style={{
-      background: 'var(--color-background-primary)',
-      border: '0.5px solid var(--color-border-tertiary)',
-      borderRadius: 'var(--border-radius-lg)',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'border-color 0.2s',
-      cursor: 'pointer',
-      position: 'relative'
-    }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--color-border-primary)')}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--color-border-tertiary)')}
-      onClick={() => window.open(article.url, '_blank')}
-    >
-      {/* Save Button */}
-      <button
-        onClick={toggleSave}
-        disabled={loading}
-        style={{
-          position: 'absolute',
-          top: '10px',
-          right: '10px',
-          background: saved ? '#111' : 'rgba(255,255,255,0.9)',
-          border: '0.5px solid var(--color-border-secondary)',
-          borderRadius: 'var(--border-radius-md)',
-          padding: '4px 10px',
-          fontSize: '12px',
-          fontWeight: '600',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          color: saved ? '#fff' : 'var(--color-text-primary)',
-          zIndex: 10,
-          opacity: loading ? 0.7 : 1
-        }}
-      >
-        {loading ? '...' : saved ? 'Unsave' : 'Save'}
-      </button>
+  const categoryColors: Record<string, string> = {
+    technology: '#2563eb',
+    sports: '#16a34a',
+    politics: '#dc2626',
+    business: '#d97706',
+    health: '#0891b2',
+    entertainment: '#9333ea',
+    science: '#0d9488',
+    general: '#555'
+  }
 
+  return (
+    <div
+      onClick={() => window.open(article.url, '_blank')}
+      style={{
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        position: 'relative',
+        transition: 'transform 0.2s',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-2px)')}
+      onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+    >
       {/* Image */}
-      {article.image_url && (
+      {article.image_url ? (
         <img
           src={article.image_url}
           alt={article.title}
           style={{
             width: '100%',
-            height: '180px',
-            objectFit: 'cover'
+            height: '200px',
+            objectFit: 'cover',
+            borderRadius: '10px'
           }}
         />
+      ) : (
+        <div style={{
+          width: '100%',
+          height: '200px',
+          background: '#f5f5f5',
+          borderRadius: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#ccc',
+          fontSize: '32px'
+        }}>
+          📰
+        </div>
       )}
 
       {/* Content */}
-      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-
-        {/* Badges */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {article.category && (
-            <span style={{
-              fontSize: '11px',
-              padding: '2px 10px',
-              borderRadius: 'var(--border-radius-md)',
-              background: 'var(--color-background-info)',
-              color: 'var(--color-text-info)',
-              textTransform: 'capitalize'
-            }}>
-              {article.category}
-            </span>
-          )}
-          {article.sentiment && (
-            <span style={{
-              fontSize: '11px',
-              padding: '2px 10px',
-              borderRadius: 'var(--border-radius-md)',
-              background: 'var(--color-background-secondary)',
-              color: sentimentColor[article.sentiment] || 'var(--color-text-secondary)',
-              textTransform: 'capitalize'
-            }}>
-              {article.sentiment}
-            </span>
-          )}
-          {article.bias_score && (
-            <span style={{
-              fontSize: '11px',
-              padding: '2px 10px',
-              borderRadius: 'var(--border-radius-md)',
-              background: 'var(--color-background-secondary)',
-              color: biasColor[article.bias_score] || 'var(--color-text-secondary)',
-              textTransform: 'capitalize'
-            }}>
-              Bias: {article.bias_score}
-            </span>
-          )}
-        </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Category */}
+        <span style={{
+          fontSize: '12px',
+          fontWeight: '600',
+          color: categoryColors[article.category] || '#555',
+          textTransform: 'capitalize'
+        }}>
+          {article.category}
+        </span>
 
         {/* Title */}
         <h3 style={{
-          fontSize: '15px',
-          fontWeight: '500',
-          color: 'var(--color-text-primary)',
+          fontSize: '16px',
+          fontWeight: '700',
+          color: '#111',
           margin: 0,
-          lineHeight: '1.4'
+          lineHeight: '1.4',
+          letterSpacing: '-0.3px',
+          fontFamily: "'Playfair Display', serif"
         }}>
-          {article.title}
+          {article.title?.replace(/\s-\s[^-]+$/, '')}
         </h3>
 
         {/* Description */}
         <p style={{
           fontSize: '13px',
-          color: 'var(--color-text-secondary)',
+          color: '#777',
           margin: 0,
           lineHeight: '1.6',
-          flex: 1
         }}>
-          {article.description?.slice(0, 120)}...
+          {article.description?.slice(0, 100)}...
         </p>
 
         {/* Footer */}
@@ -200,15 +153,70 @@ export default function NewsCard({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginTop: '8px',
-          paddingTop: '8px',
-          borderTop: '0.5px solid var(--color-border-tertiary)'
+          marginTop: '4px'
         }}>
-          <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-            {article.source}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '26px',
+              height: '26px',
+              borderRadius: '50%',
+              background: '#111',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '10px',
+              fontWeight: '700',
+              flexShrink: 0
+            }}>
+              {article.source?.charAt(0) || 'N'}
+            </div>
+            <span style={{ fontSize: '12px', color: '#888' }}>
+              {article.source?.replace(' English', '')} • {new Date(article.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          </div>
+
+          <button
+            onClick={toggleSave}
+            disabled={loading}
+            style={{
+              background: saved ? '#111' : '#f5f5f5',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '4px 10px',
+              fontSize: '11px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              color: saved ? '#fff' : '#555',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? '...' : saved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+
+        {/* Sentiment + Bias badges */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <span style={{
+            fontSize: '11px',
+            padding: '2px 8px',
+            borderRadius: '100px',
+            background: article.sentiment === 'positive' ? '#f0fdf4' : article.sentiment === 'negative' ? '#fff1f2' : '#f5f5f5',
+            color: article.sentiment === 'positive' ? '#16a34a' : article.sentiment === 'negative' ? '#dc2626' : '#777',
+            fontWeight: '500',
+            textTransform: 'capitalize'
+          }}>
+            {article.sentiment}
           </span>
-          <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-            {new Date(article.published_at).toLocaleDateString()}
+          <span style={{
+            fontSize: '11px',
+            padding: '2px 8px',
+            borderRadius: '100px',
+            background: '#f5f5f5',
+            color: article.bias_score === 'high' ? '#dc2626' : article.bias_score === 'medium' ? '#d97706' : '#16a34a',
+            fontWeight: '500'
+          }}>
+            Bias: {article.bias_score}
           </span>
         </div>
       </div>

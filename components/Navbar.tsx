@@ -8,14 +8,35 @@ export default function Navbar() {
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+const [profile, setProfile] = useState<any>(null)
   const router = useRouter()
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null)
-    })
-  }, [])
+ useEffect(() => {
+  supabase.auth.getUser().then(async ({ data }) => {
+    setUser(data.user)
+    if (data.user) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', data.user.id)
+        .single()
+      setProfile(prof)
+    }
+  })
+  supabase.auth.onAuthStateChange(async (_, session) => {
+    setUser(session?.user ?? null)
+    if (session?.user) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', session.user.id)
+        .single()
+      setProfile(prof)
+    } else {
+      setProfile(null)
+    }
+  })
+}, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -33,21 +54,20 @@ export default function Navbar() {
   return (
     <>
       <nav style={{
-        borderBottom: '0.5px solid var(--color-border-tertiary)',
-        padding: '0 1.5rem',
-        height: '60px',
+        borderBottom: '1px solid #f0f0f0',
+        padding: '0 2rem',
+        height: '64px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background: 'var(--color-background-primary)',
+        background: '#fff',
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        gap: '12px'
+        gap: '16px'
       }}>
-
-        {/* Left — Hamburger + Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+        {/* Left */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
@@ -58,100 +78,100 @@ export default function Navbar() {
               display: 'flex',
               flexDirection: 'column',
               gap: '5px',
-              color: 'var(--color-text-primary)'
+              color: '#111'
             }}
           >
-            <span style={{ display: 'block', width: '22px', height: '2px', background: 'currentColor', borderRadius: '2px' }} />
-            <span style={{ display: 'block', width: '22px', height: '2px', background: 'currentColor', borderRadius: '2px' }} />
-            <span style={{ display: 'block', width: '22px', height: '2px', background: 'currentColor', borderRadius: '2px' }} />
+            <span style={{ display: 'block', width: '20px', height: '1.5px', background: 'currentColor' }} />
+            <span style={{ display: 'block', width: '20px', height: '1.5px', background: 'currentColor' }} />
+            <span style={{ display: 'block', width: '20px', height: '1.5px', background: 'currentColor' }} />
           </button>
 
           <Link href="/" style={{
             fontSize: '20px',
-            fontWeight: '700',
-            color: 'var(--color-text-primary)',
+            fontWeight: '800',
+            color: '#111',
             textDecoration: 'none',
-            letterSpacing: '-1px'
+            letterSpacing: '-1px',
+            fontFamily: "'Playfair Display', serif"
           }}>
             NewsAI
           </Link>
         </div>
 
-        {/* Center — Search */}
-        <form
-          onSubmit={handleSearch}
-          style={{
+        {/* Center links - desktop */}
+        <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }} className="desktop-nav">
+          {['Technology', 'Politics', 'Business', 'Sports', 'Health'].map(cat => (
+            <Link key={cat} href={`/?category=${cat.toLowerCase()}`} style={{
+              fontSize: '14px',
+              fontWeight: '500',
+              color: '#555',
+              textDecoration: 'none',
+              transition: 'color 0.2s'
+            }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#111')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#555')}
+            >
+              {cat}
+            </Link>
+          ))}
+        </div>
+
+        {/* Right */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+          <form onSubmit={handleSearch} style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            background: '#1a1a1a',
-            border: '0.5px solid #333',
-            borderRadius: 'var(--border-radius-lg)',
-            padding: '7px 14px',
-            flex: 1,
-            maxWidth: '400px',
-            minWidth: '120px'
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke="#888" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              color: '#fff',
-              fontSize: '14px',
-              width: '100%',
-              minWidth: 0
-            }}
-          />
-          {search && (
-            <button type="button" onClick={() => setSearch('')}
-              style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#888', padding: 0, fontSize: '18px', lineHeight: 1, flexShrink: 0 }}>
-              ×
-            </button>
-          )}
-        </form>
-
-        {/* Right — Desktop only links */}
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexShrink: 0 }}>
-          {/* Desktop nav links - hidden on mobile */}
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}
-            className="desktop-nav">
-            {['Technology', 'Sports', 'Business'].map(cat => (
-              <Link key={cat} href={`/?category=${cat.toLowerCase()}`} style={{
+            gap: '6px',
+            background: '#f5f5f5',
+            border: '1px solid #eee',
+            borderRadius: '8px',
+            padding: '6px 12px',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="#999" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                color: '#111',
                 fontSize: '13px',
-                fontWeight: '500',
-                color: 'var(--color-text-secondary)',
-                textDecoration: 'none',
-              }}>
-                {cat}
-              </Link>
-            ))}
-          </div>
+                width: '140px',
+              }}
+            />
+          </form>
 
           {user ? (
-            <button onClick={handleLogout} style={{
-              fontSize: '13px',
-              fontWeight: '500',
-              color: 'var(--color-text-primary)',
-              background: 'none',
-              border: '0.5px solid var(--color-border-secondary)',
-              borderRadius: 'var(--border-radius-md)',
-              padding: '5px 14px',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap'
-            }}>
-              Logout
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+  {profile?.full_name && (
+    <span style={{
+      fontSize: '13px',
+      color: '#555',
+      fontWeight: '500'
+    }}>
+      Hi, {profile.full_name.split(' ')[0]}!
+    </span>
+  )}
+  <button onClick={handleLogout} style={{
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#111',
+    background: 'none',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    padding: '6px 16px',
+    cursor: 'pointer',
+  }}>
+    Logout
+  </button>
+</div>
           ) : (
             <Link href="/login" style={{
               fontSize: '13px',
@@ -159,9 +179,8 @@ export default function Navbar() {
               color: '#fff',
               background: '#111',
               textDecoration: 'none',
-              padding: '5px 14px',
-              borderRadius: 'var(--border-radius-md)',
-              whiteSpace: 'nowrap'
+              padding: '7px 18px',
+              borderRadius: '8px',
             }}>
               Login
             </Link>
@@ -169,31 +188,30 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Sidebar Menu */}
+      {/* Sidebar */}
       {menuOpen && (
         <>
           <div style={{
             position: 'fixed',
-            top: '60px',
+            top: '64px',
             left: 0,
             width: '260px',
             height: '100vh',
-            background: 'var(--color-background-primary)',
-            borderRight: '0.5px solid var(--color-border-tertiary)',
+            background: '#fff',
+            borderRight: '1px solid #f0f0f0',
             zIndex: 200,
-            padding: '1.5rem 1rem',
+            padding: '2rem 1.5rem',
             display: 'flex',
             flexDirection: 'column',
             gap: '4px',
-            overflowY: 'auto'
           }}>
             <p style={{
               fontSize: '11px',
-              fontWeight: '700',
-              color: 'var(--color-text-tertiary)',
+              fontWeight: '600',
+              color: '#999',
               letterSpacing: '1px',
               textTransform: 'uppercase',
-              margin: '0 0 12px 12px'
+              margin: '0 0 16px'
             }}>
               Categories
             </p>
@@ -203,48 +221,44 @@ export default function Navbar() {
                 style={{
                   fontSize: '15px',
                   fontWeight: '500',
-                  color: 'var(--color-text-primary)',
+                  color: '#111',
                   textDecoration: 'none',
                   padding: '10px 12px',
-                  borderRadius: 'var(--border-radius-md)',
-                  display: 'block'
+                  borderRadius: '8px',
+                  display: 'block',
+                  transition: 'background 0.15s'
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-background-secondary)')}
+                onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 {cat}
               </Link>
             ))}
 
-            <div style={{
-              marginTop: 'auto',
-              paddingTop: '1rem',
-              borderTop: '0.5px solid var(--color-border-tertiary)'
-            }}>
+            <div style={{ marginTop: 'auto', borderTop: '1px solid #f0f0f0', paddingTop: '1rem' }}>
               <Link href="/saved" onClick={() => setMenuOpen(false)} style={{
                 fontSize: '15px',
                 fontWeight: '500',
-                color: 'var(--color-text-primary)',
+                color: '#111',
                 textDecoration: 'none',
                 padding: '10px 12px',
                 display: 'block',
-                borderRadius: 'var(--border-radius-md)',
+                borderRadius: '8px',
               }}>
                 Saved Articles
               </Link>
-
               {user ? (
                 <button onClick={() => { handleLogout(); setMenuOpen(false) }} style={{
                   width: '100%',
                   textAlign: 'left',
                   fontSize: '15px',
                   fontWeight: '500',
-                  color: 'var(--color-text-primary)',
+                  color: '#111',
                   background: 'none',
                   border: 'none',
                   padding: '10px 12px',
                   cursor: 'pointer',
-                  borderRadius: 'var(--border-radius-md)',
+                  borderRadius: '8px',
                 }}>
                   Logout
                 </button>
@@ -252,11 +266,11 @@ export default function Navbar() {
                 <Link href="/login" onClick={() => setMenuOpen(false)} style={{
                   fontSize: '15px',
                   fontWeight: '500',
-                  color: 'var(--color-text-primary)',
+                  color: '#111',
                   textDecoration: 'none',
                   padding: '10px 12px',
                   display: 'block',
-                  borderRadius: 'var(--border-radius-md)',
+                  borderRadius: '8px',
                 }}>
                   Login
                 </Link>
@@ -264,21 +278,20 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Overlay */}
           <div onClick={() => setMenuOpen(false)} style={{
             position: 'fixed',
-            top: '60px',
+            top: '64px',
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(0,0,0,0.5)',
+            background: 'rgba(0,0,0,0.3)',
             zIndex: 199
           }} />
         </>
       )}
 
       <style>{`
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
         }
       `}</style>
